@@ -1,0 +1,129 @@
+<%- include('partials/header.ejs'); -%>
+
+<% if (!user) { %>
+<div class="box" id="user-form">
+  <h2>Please enter your name and Gmail to continue</h2>
+  <form action="/register" method="post">
+    <input type="text" name="name" placeholder="Your Name" required autocomplete="off" />
+    <input type="email" name="email" placeholder="Your Gmail" required autocomplete="off" />
+    <button type="submit">Submit</button>
+  </form>
+</div>
+<% } else { %>
+<div class="box" id="heading">
+  <h1><%= listTitle %> - <%= user.name %></h1>
+</div>
+<div class="box">
+  <% for(let item of listItems){%>
+  <div class="item">
+    <form action="/delete" method="post">
+      <input type="checkbox" onchange="this.form.submit()" name="deleteItemId" value="<%= item.id %>" />
+    </form>
+
+    <div class="item <%= new Date(item.due_date) < new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }) ? 'overdue' : '' %>">
+      <p id="title<%=item.id%>">
+        <%= item.title %> - Due: <%= new
+          Date(item.due_date).toLocaleString("en-US", { timeZone: "Asia/Dhaka" })
+          %>
+      </p>
+    </div>
+
+    <form class="edit" action="/edit" method="post">
+      <input type="hidden" name="updatedItemId" value="<%= item.id %>" />
+      <input id="input<%=item.id%>" type="text" name="updatedItemTitle" value="<%= item.title %>" autocomplete="off" autofocus="true" hidden="true" />
+      <button id="done<%=item.id%>" class="edit" type="submit" hidden>
+        <img class="icon" src="/assets/icons/check-solid.svg" alt="tick image" />
+      </button>
+    </form>
+    <button id="edit<%=item.id%>" class="edit" onclick="handler('<%=item.id%>')">
+      <img class="icon" src="/assets/icons/pencil-solid.svg" alt="pencil image" />
+    </button>
+  </div>
+  <% } %>
+
+  <form class="item" id="addItemForm" action="/add" method="post">
+    <input type="text" name="newItem" placeholder="New Item" autocomplete="off" autofocus="true" />
+    <input id="dueDateInput" type="datetime-local" name="dueDate" style="display: none" />
+    <!-- Hidden Input -->
+    <button class="edit" type="button" onclick="toggleDatePicker()">
+      <img class="icon" src="/assets/icons/calendar.svg" alt="Pick due date" />
+    </button>
+    <button class="add" type="submit">+</button>
+  </form>
+</div>
+<% } %>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  // Convert datetime-local input to UTC ISO string before form submission
+  document.getElementById("addItemForm").addEventListener("submit", function(e) {
+    const dateInput = document.getElementById("dueDateInput");
+    if (dateInput.value) {
+      const localDate = new Date(dateInput.value);
+      const utcDate = new Date(
+        localDate.getTime() - localDate.getTimezoneOffset() * 60000
+      );
+      // Format as yyyy-MM-ddTHH:mm for datetime-local input compatibility
+      dateInput.value = utcDate.toISOString().slice(0, 16);
+    }
+  });
+
+  function handler(id) {
+    console.log("Edit button clicked for:", id); // Debugging
+
+    const title = document.getElementById("title" + id);
+    const editBtn = document.getElementById("edit" + id);
+    const doneBtn = document.getElementById("done" + id);
+    const inputField = document.getElementById("input" + id);
+
+    if (title && editBtn && doneBtn && inputField) {
+      title.hidden = true;
+      editBtn.hidden = true;
+      doneBtn.hidden = false;
+      inputField.hidden = false;
+      inputField.focus(); // Auto-focus for smooth editing
+    } else {
+      console.error("Error: Missing elements for ID", id);
+    }
+  }
+  if ("Notification" in window) {
+    Notification.requestPermission().then((perm) => {
+      if (perm === "granted") {
+        setInterval(async () => {
+          const overdueTasks = await fetch("/due-tasks").then((res) =>
+            res.json()
+          );
+          overdueTasks.forEach((task) => {
+            if (!localStorage.getItem(`notified_${task.id}`)) {
+              new Notification("Task Reminder!", {
+                body: `"${task.title}" is overdue!`,
+              });
+              localStorage.setItem(`notified_${task.id}`, true); // Prevent duplicate notifications
+            }
+          });
+        }, 60000);
+      }
+    });
+  }
+
+  function toggleDatePicker() {
+    const dateInput = document.getElementById("dueDateInput");
+    if (dateInput.style.display === "none") {
+      dateInput.style.display = "inline-block"; // Show when clicked
+      dateInput.showPicker(); // Open the date picker
+    } else {
+      dateInput.style.display = "none"; // Hide if clicked again
+    }
+  }
+
+  const socket = io();
+  socket.on("reminder", (dueTasks) => {
+    dueTasks.forEach((task) => {
+      new Notification("Task Reminder!", {
+        body: `"${task.title}" is overdue!`,
+      });
+    });
+  });
+</script>
+
+<%- include('partials/footer.ejs'); -%>
