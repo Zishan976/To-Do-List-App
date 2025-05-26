@@ -2,10 +2,11 @@ import nodemailer from "nodemailer";
 
 // Configure email transport
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.ethereal.email",
+  port: 587,
   auth: {
-    user: process.env.EMAIL_USER || "sharkarzishan@gmail.com",
-    pass: process.env.EMAIL_PASS || "Zish@n2002",
+    user: "amani.skiles@ethereal.email",
+    pass: "AMHPsaMUVNZZN2tfSH",
   },
 });
 
@@ -13,7 +14,7 @@ const transporter = nodemailer.createTransport({
 export async function sendReminder(email, taskTitle) {
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_USER || "sharkarzishan@gmail.com",
+      from: '"Zishan" <amani.skiles@ethereal.email>',
       to: email,
       subject: "Task Reminder",
       html: `<p>Your task <strong>"${taskTitle}"</strong> is <span style="color:red;">overdue!</span></p>`,

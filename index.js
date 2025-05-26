@@ -95,8 +95,15 @@ app.get("/", async (req, res) => {
       "SELECT * FROM items WHERE user_id = $1 ORDER BY id ASC",
       [userId]
     );
+
+    const date = new Date();
+    const dayName = new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+    }).format(date);
+    console.log(dayName); // Outputs the full weekday name
+
     res.render("index.ejs", {
-      listTitle: "Today",
+      listTitle: dayName,
       listItems: result.rows,
       user: req.session.user,
     });
@@ -209,22 +216,26 @@ server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-// Schedule a cron job to run every minute to send email reminders for overdue tasks
 cron.schedule("* * * * *", async () => {
   try {
+    // Select overdue tasks that have not been reminded yet
     const { rows: overdueTasks } = await db.query(
-      `SELECT items.title, users.email 
+      `SELECT items.id, items.title, users.email 
        FROM items 
        JOIN users ON items.user_id = users.id 
-       WHERE items.due_date <= (NOW() AT TIME ZONE 'Asia/Dhaka')`
+       WHERE items.due_date <= (NOW() AT TIME ZONE 'Asia/Dhaka') AND (items.reminder_sent IS NULL OR items.reminder_sent = false)`
     );
 
-    overdueTasks.forEach((task) => {
-      sendReminder(task.email, task.title);
+    for (const task of overdueTasks) {
+      await sendReminder(task.email, task.title);
       console.log(
         `Email reminder sent to ${task.email} for task "${task.title}"`
       );
-    });
+      // Mark the task as reminded
+      await db.query("UPDATE items SET reminder_sent = true WHERE id = $1", [
+        task.id,
+      ]);
+    }
   } catch (err) {
     console.error("Error in scheduled email reminders:", err);
   }
