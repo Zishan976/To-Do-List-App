@@ -2,11 +2,21 @@
 
 <% if (!user) { %>
 <div class="box" id="user-form">
-  <h2>Please enter your name and Gmail to continue</h2>
-  <form action="/register" method="post">
-    <input type="text" name="name" placeholder="Your Name" required autocomplete="off" />
-    <input type="email" name="email" placeholder="Your Gmail" required autocomplete="off" />
-    <button type="submit">Submit</button>
+  <div class="register-heading">
+    <h2>Welcome! Please enter your name and email to continue</h2>
+  </div>
+  <form class="register-form" action="/register" method="post" novalidate>
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input id="name" type="text" name="name" placeholder="Your Name" required autocomplete="off" autofocus />
+      <small class="form-text">Please enter your full name.</small>
+    </div>
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input id="email" type="email" name="email" placeholder="Your Email" required autocomplete="off" />
+      <small class="form-text">We'll never share your email with anyone else.</small>
+    </div>
+    <button class="btn-submit" type="submit">Register</button>
   </form>
 </div>
 <% } else { %>
@@ -21,16 +31,12 @@
     </form>
 
     <div class="item <%= new Date(item.due_date) < new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }) ? 'overdue' : '' %>">
-      <p id="title<%=item.id%>">
-        <%= item.title %> - Due: <%= new
-          Date(item.due_date).toLocaleString("en-US", { timeZone: "Asia/Dhaka" })
-          %>
-      </p>
+      <p id="title<%=item.id%>"> <%= item.title %> - Due: <%= new Date(item.due_date).toLocaleString("en-US", { timeZone: "Asia/Dhaka", hour12: true, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }) %> </p>
     </div>
 
     <form class="edit" action="/edit" method="post">
       <input type="hidden" name="updatedItemId" value="<%= item.id %>" />
-      <input id="input<%=item.id%>" type="text" name="updatedItemTitle" value="<%= item.title %>" autocomplete="off" autofocus="true" hidden="true" />
+      <input class="addTask" id="input<%=item.id%>" type="text" name="updatedItemTitle" value="<%= item.title %>" autocomplete="off" autofocus="true" hidden="true" />
       <button id="done<%=item.id%>" class="edit" type="submit" hidden>
         <img class="icon" src="/assets/icons/check-solid.svg" alt="tick image" />
       </button>
@@ -42,7 +48,7 @@
   <% } %>
 
   <form class="item" id="addItemForm" action="/add" method="post">
-    <input type="text" name="newItem" placeholder="New Item" autocomplete="off" autofocus="true" />
+    <input class="addTask" type="text" name="newItem" placeholder="New Item" autocomplete="off" autofocus="true" />
     <input id="dueDateInput" type="datetime-local" name="dueDate" style="display: none" />
     <!-- Hidden Input -->
     <button class="edit" type="button" onclick="toggleDatePicker()">
@@ -55,19 +61,6 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  // Convert datetime-local input to UTC ISO string before form submission
-  document.getElementById("addItemForm").addEventListener("submit", function(e) {
-    const dateInput = document.getElementById("dueDateInput");
-    if (dateInput.value) {
-      const localDate = new Date(dateInput.value);
-      const utcDate = new Date(
-        localDate.getTime() - localDate.getTimezoneOffset() * 60000
-      );
-      // Format as yyyy-MM-ddTHH:mm for datetime-local input compatibility
-      dateInput.value = utcDate.toISOString().slice(0, 16);
-    }
-  });
-
   function handler(id) {
     console.log("Edit button clicked for:", id); // Debugging
 

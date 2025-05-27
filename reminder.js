@@ -1,12 +1,17 @@
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config();
 
-// Configure email transport
+console.log("SMTP Auth Config:", {
+  user: process.env.SMTP_USER,
+  pass: process.env.SMTP_PASS,
+});
+// Configure email transport for real SMTP provider
 const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
+  service: "gmail",
   auth: {
-    user: "amani.skiles@ethereal.email",
-    pass: "AMHPsaMUVNZZN2tfSH",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
@@ -14,7 +19,7 @@ const transporter = nodemailer.createTransport({
 export async function sendReminder(email, taskTitle) {
   try {
     await transporter.sendMail({
-      from: '"Zishan" <amani.skiles@ethereal.email>',
+      from: `"Todo App" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Task Reminder",
       html: `<p>Your task <strong>"${taskTitle}"</strong> is <span style="color:red;">overdue!</span></p>`,
