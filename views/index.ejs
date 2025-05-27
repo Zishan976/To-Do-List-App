@@ -1,25 +1,7 @@
-<%- include('partials/header.ejs'); -%>
-
 <% if (!user) { %>
-<div class="box" id="user-form">
-  <div class="register-heading">
-    <h2>Welcome! Please enter your name and email to continue</h2>
-  </div>
-  <form class="register-form" action="/register" method="post" novalidate>
-    <div class="form-group">
-      <label for="name">Name:</label>
-      <input id="name" type="text" name="name" placeholder="Your Name" required autocomplete="off" autofocus />
-      <small class="form-text">Please enter your full name.</small>
-    </div>
-    <div class="form-group">
-      <label for="email">Email:</label>
-      <input id="email" type="email" name="email" placeholder="Your Email" required autocomplete="off" />
-      <small class="form-text">We'll never share your email with anyone else.</small>
-    </div>
-    <button class="btn-submit" type="submit">Register</button>
-  </form>
-</div>
+<%- include('partials/login-register.ejs') %>
 <% } else { %>
+<%- include('partials/header.ejs'); -%>
 <div class="box" id="heading">
   <h1><%= listTitle %> - <%= user.name %></h1>
 </div>
@@ -57,66 +39,12 @@
     <button class="add" type="submit">+</button>
   </form>
 </div>
-<% } %>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>
-  function handler(id) {
-    console.log("Edit button clicked for:", id); // Debugging
+<script src="js/main.js"></script>
 
-    const title = document.getElementById("title" + id);
-    const editBtn = document.getElementById("edit" + id);
-    const doneBtn = document.getElementById("done" + id);
-    const inputField = document.getElementById("input" + id);
 
-    if (title && editBtn && doneBtn && inputField) {
-      title.hidden = true;
-      editBtn.hidden = true;
-      doneBtn.hidden = false;
-      inputField.hidden = false;
-      inputField.focus(); // Auto-focus for smooth editing
-    } else {
-      console.error("Error: Missing elements for ID", id);
-    }
-  }
-  if ("Notification" in window) {
-    Notification.requestPermission().then((perm) => {
-      if (perm === "granted") {
-        setInterval(async () => {
-          const overdueTasks = await fetch("/due-tasks").then((res) =>
-            res.json()
-          );
-          overdueTasks.forEach((task) => {
-            if (!localStorage.getItem(`notified_${task.id}`)) {
-              new Notification("Task Reminder!", {
-                body: `"${task.title}" is overdue!`,
-              });
-              localStorage.setItem(`notified_${task.id}`, true); // Prevent duplicate notifications
-            }
-          });
-        }, 60000);
-      }
-    });
-  }
-
-  function toggleDatePicker() {
-    const dateInput = document.getElementById("dueDateInput");
-    if (dateInput.style.display === "none") {
-      dateInput.style.display = "inline-block"; // Show when clicked
-      dateInput.showPicker(); // Open the date picker
-    } else {
-      dateInput.style.display = "none"; // Hide if clicked again
-    }
-  }
-
-  const socket = io();
-  socket.on("reminder", (dueTasks) => {
-    dueTasks.forEach((task) => {
-      new Notification("Task Reminder!", {
-        body: `"${task.title}" is overdue!`,
-      });
-    });
-  });
-</script>
 
 <%- include('partials/footer.ejs'); -%>
+
+<% } %>

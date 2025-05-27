@@ -58,6 +58,28 @@ db.connect((err) => {
   }
 });
 
+app.get("/check-email", async (req, res) => {
+  const email = req.query.email;
+  if (!email) {
+    return res.status(400).json({ exists: false, error: "Email is required" });
+  }
+  try {
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (result.rows.length > 0) {
+      return res.json({ exists: true });
+    } else {
+      return res.json({ exists: false });
+    }
+  } catch (err) {
+    console.error("Error checking email:", err);
+    return res
+      .status(500)
+      .json({ exists: false, error: "Internal Server Error" });
+  }
+});
+
 app.post("/register", async (req, res) => {
   const { name, email } = req.body;
   try {
@@ -67,13 +89,17 @@ app.post("/register", async (req, res) => {
     ]);
     let user;
     if (result.rows.length === 0) {
-      // Insert new user
+      // Insert new user, require name
+      if (!name) {
+        return res.redirect("/");
+      }
       result = await db.query(
         "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *",
         [name, email]
       );
       user = result.rows[0];
     } else {
+      // User exists, login with email only
       user = result.rows[0];
     }
     // Set session

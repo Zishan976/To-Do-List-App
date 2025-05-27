@@ -22,8 +22,9 @@ export async function sendReminder(email, taskTitle) {
       from: `"Todo App" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Task Reminder",
-      html: `<p>Your task <strong>"${taskTitle}"</strong> is <span style="color:red;">overdue!</span></p>`,
+      html: `<p>Your task <strong>"${taskTitle}"</strong> is <span style="color:red;">overdue!</span>. Make sure to complete it on time!</p>`,
     });
+
     console.log("Reminder sent for:", taskTitle);
   } catch (err) {
     console.error(`Error sending email to ${email}:`, err.message);
