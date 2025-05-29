@@ -54,3 +54,27 @@ socket.on("reminder", (dueTasks) => {
     });
   });
 });
+
+// New code to format due dates using UTC methods to display exact UTC time
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".due-date").forEach((el) => {
+    const dateStr = el.getAttribute("data-due-date");
+    if (dateStr) {
+      // Format the UTC date string into a readable format.
+      const formattedDate = new Date(dateStr).toLocaleString("en-US", {
+        timeZone: "UTC",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+      // Replace "Loading..." with the properly formatted date.
+      el.textContent = el.textContent.replace(
+        "Loading...",
+        `Due: ${formattedDate}`
+      );
+    }
+  });
+});
