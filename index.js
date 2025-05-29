@@ -13,6 +13,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 const port = process.env.PORT || 3000;
 dotenv.config();
+const { Pool } = pg;
 
 app.use(
   session({
@@ -42,13 +43,20 @@ io.on("connection", async (socket) => {
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
-const db = new pg.Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "permalist",
-  password: "zishan",
-  port: 5432,
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL, // Use Render's database URL
+  ssl: {
+    rejectUnauthorized: false, // Required for Render's PostgreSQL
+  },
 });
+
+// const db = new pg.Pool({
+//   user: "postgres",
+//   host: "localhost",
+//   database: "permalist",
+//   password: "zishan",
+//   port: 5432,
+// });
 
 db.connect((err) => {
   if (err) {
