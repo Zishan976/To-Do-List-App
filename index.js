@@ -27,10 +27,19 @@ app.use(
 io.on("connection", async (socket) => {
   console.log("User connected:", socket.id);
 
+  // Assuming you have a way to get userId from the socket, e.g., from session or token
+  // For demonstration, let's assume userId is passed as a query parameter during connection
+  const userId = socket.handshake.query.userId;
+
   setInterval(async () => {
     try {
+      if (!userId) {
+        console.warn("User ID not found for socket:", socket.id);
+        return;
+      }
       const { rows: dueTasks } = await db.query(
-        "SELECT items.* FROM items JOIN users ON items.user_id = users.id WHERE items.due_date <= (NOW() AT TIME ZONE 'Asia/Dhaka')"
+        "SELECT items.* FROM items WHERE items.user_id = $1 AND items.due_date <= (NOW() AT TIME ZONE 'Asia/Dhaka')",
+        [userId]
       );
       if (dueTasks.length > 0) {
         socket.emit("reminder", dueTasks);
@@ -63,28 +72,6 @@ db.connect((err) => {
     console.error("Database connection error:", err.stack);
   } else {
     console.log("Connected to the database");
-  }
-});
-
-app.get("/check-email", async (req, res) => {
-  const email = req.query.email;
-  if (!email) {
-    return res.status(400).json({ exists: false, error: "Email is required" });
-  }
-  try {
-    const result = await db.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
-    if (result.rows.length > 0) {
-      return res.json({ exists: true });
-    } else {
-      return res.json({ exists: false });
-    }
-  } catch (err) {
-    console.error("Error checking email:", err);
-    return res
-      .status(500)
-      .json({ exists: false, error: "Internal Server Error" });
   }
 });
 
@@ -228,7 +215,7 @@ app.get("/due-tasks", async (req, res) => {
   try {
     const userId = req.session.user.id;
     const { rows: overdueTasks } = await db.query(
-      `SELECT items.title, users.email 
+      `SELECT items.id, items.title, users.email 
        FROM items 
        JOIN users ON items.user_id = users.id 
        WHERE items.due_date <= (NOW() AT TIME ZONE 'Asia/Dhaka') AND users.id = $1`,
