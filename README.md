@@ -4,6 +4,8 @@
 
 This is a web-based Todo List application that allows users to register, log in, and manage their tasks with due dates. The application provides real-time reminders for upcoming tasks using WebSocket technology and sends email notifications for overdue tasks. It is built with Express.js, PostgreSQL, and EJS templating.
 
+The website is deployed and accessible at: [https://to-do-list-app-5fbw.onrender.com](https://to-do-list-app-5fbw.onrender.com)
+
 ## Features
 
 - User registration and login via email
@@ -43,7 +45,7 @@ This is a web-based Todo List application that allows users to register, log in,
    ```
    npm start
    ```
-6. Open your browser and navigate to `https://to-do-list-app-5fbw.onrender.com`.
+6. Open your browser and navigate to `http://localhost:3000`.
 
 ## Usage
 
