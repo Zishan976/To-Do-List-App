@@ -144,13 +144,13 @@ app.post("/add", async (req, res) => {
     const dueDate = req.body.dueDate
       ? req.body.dueDate
       : (() => {
-          // Get current time in Asia/Dhaka timezone (UTC+6)
-          const now = new Date();
-          // Calculate offset in milliseconds for Asia/Dhaka (UTC+6)
-          const offset = 6 * 60 * 60 * 1000;
-          const dhakaTime = new Date(now.getTime() + offset);
-          return dhakaTime.toISOString();
-        })();
+        // Get current time in Asia/Dhaka timezone (UTC+6)
+        const now = new Date();
+        // Calculate offset in milliseconds for Asia/Dhaka (UTC+6)
+        const offset = 6 * 60 * 60 * 1000;
+        const dhakaTime = new Date(now.getTime() + offset);
+        return dhakaTime.toISOString();
+      })();
     const userId = req.session.user.id;
 
     await db.query(
