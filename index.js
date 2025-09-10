@@ -5,6 +5,7 @@ import { sendReminder } from "./reminder.js";
 import { Server } from "socket.io";
 import http from "http";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import cron from "node-cron";
 import dotenv from "dotenv";
 
@@ -14,15 +15,6 @@ const io = new Server(server);
 const port = process.env.PORT || 3000;
 dotenv.config();
 const { Pool } = pg;
-
-app.use(
-  session({
-    secret: "zishan_secret_key",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }, // Set to true if using HTTPS
-  })
-);
 
 io.on("connection", async (socket) => {
   console.log("User connected:", socket.id);
@@ -74,6 +66,26 @@ db.connect((err) => {
     console.log("Connected to the database");
   }
 });
+
+// Configure session store
+const PgSession = connectPgSimple(session);
+
+// Configure session middleware after db and store setup
+app.use(
+  session({
+    store: new PgSession({
+      pool: db, // Use the same db pool
+      tableName: 'session', // Use the table we created
+    }),
+    secret: "zishan_secret_key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: false, // Set to true if using HTTPS
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    },
+  })
+);
 
 app.post("/register", async (req, res) => {
   const { name, email } = req.body;
